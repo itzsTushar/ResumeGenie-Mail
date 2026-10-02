@@ -1,0 +1,296 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// ==========================
+// USER
+// ==========================
+
+model User {
+  userId            BigInt   @id @default(autoincrement())
+  name              String
+  email             String   @unique
+  mobileNo          String?
+  passwordEncrypted String?
+  username          String   @unique
+  accessToken       String?
+  refreshToken      String?
+  avatar            String?
+
+  resumes    Resume[]
+  excels     Excel[]
+  otpSystems OtpSystem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+// ==========================
+// RESUME
+// ==========================
+
+model Resume {
+  resumeId BigInt @id @default(autoincrement())
+  userId   BigInt
+
+  name         String?
+  email        String?
+  mobileNo     String?
+  introduction String?
+  address      String?
+
+  user User @relation(
+    fields: [userId],
+    references: [userId],
+    onDelete: Cascade
+  )
+
+  educations     Education[]
+  experiences    Experience[]
+  projects       Project[]
+  certifications Certification[]
+  research       Research[]
+  skills         ResumeSkill[]
+  links          ResumeLink[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+// ==========================
+// EDUCATION
+// ==========================
+
+model Education {
+  educationId BigInt @id @default(autoincrement())
+  resumeId    BigInt
+
+  institution String?
+  degree      String?
+  field       String?
+  startYear   Int?
+  endYear     Int?
+  cgpa        Decimal? @db.Decimal(4, 2)
+  description String?
+
+  resume Resume @relation(
+    fields: [resumeId],
+    references: [resumeId],
+    onDelete: Cascade
+  )
+}
+
+
+// ==========================
+// COMPANY
+// ==========================
+
+model Company {
+  companyId BigInt @id @default(autoincrement())
+
+  name        String
+  hrName      String?
+  hrEmail     String?
+  description String?
+
+  experiences Experience[]
+}
+
+
+// ==========================
+// EXPERIENCE
+// ==========================
+
+model Experience {
+  experienceId BigInt @id @default(autoincrement())
+  resumeId     BigInt
+  companyId    BigInt?
+
+  role        String?
+  startDate   DateTime?
+  endDate     DateTime?
+  description String?
+
+  resume Resume @relation(
+    fields: [resumeId],
+    references: [resumeId],
+    onDelete: Cascade
+  )
+
+  company Company? @relation(
+    fields: [companyId],
+    references: [companyId],
+    onDelete: SetNull
+  )
+}
+
+
+// ==========================
+// PROJECT
+// ==========================
+
+model Project {
+  projectId BigInt @id @default(autoincrement())
+  resumeId  BigInt
+
+  title        String
+  description  String?
+  technologies String?
+  github       String?
+  liveLink     String?
+  startDate    DateTime?
+  endDate      DateTime?
+
+  resume Resume @relation(
+    fields: [resumeId],
+    references: [resumeId],
+    onDelete: Cascade
+  )
+}
+
+
+// ==========================
+// CERTIFICATION
+// ==========================
+
+model Certification {
+  certificationId BigInt @id @default(autoincrement())
+  resumeId        BigInt
+
+  name          String
+  issuer        String?
+  issueDate     DateTime?
+  credentialId  String?
+  credentialUrl String?
+
+  resume Resume @relation(
+    fields: [resumeId],
+    references: [resumeId],
+    onDelete: Cascade
+  )
+}
+
+
+// ==========================
+// RESEARCH
+// ==========================
+
+model Research {
+  researchId BigInt @id @default(autoincrement())
+  resumeId   BigInt
+
+  topic    String?
+  title    String?
+  journal  String?
+  year     Int?
+  doi      String?
+  abstract String?
+  url      String?
+
+  resume Resume @relation(
+    fields: [resumeId],
+    references: [resumeId],
+    onDelete: Cascade
+  )
+}
+
+
+// ==========================
+// SKILL
+// ==========================
+
+model Skill {
+  skillId BigInt @id @default(autoincrement())
+
+  name String @unique
+
+  resumes ResumeSkill[]
+}
+
+
+// ==========================
+// RESUME ↔ SKILL
+// ==========================
+
+model ResumeSkill {
+  resumeId BigInt
+  skillId  BigInt
+
+  resume Resume @relation(
+    fields: [resumeId],
+    references: [resumeId],
+    onDelete: Cascade
+  )
+
+  skill Skill @relation(
+    fields: [skillId],
+    references: [skillId],
+    onDelete: Cascade
+  )
+
+  @@id([resumeId, skillId])
+}
+
+
+// ==========================
+// RESUME LINKS
+// ==========================
+
+model ResumeLink {
+  resumeLinkId BigInt @id @default(autoincrement())
+  resumeId     BigInt
+
+  type String
+  url  String
+
+  resume Resume @relation(
+    fields: [resumeId],
+    references: [resumeId],
+    onDelete: Cascade
+}
+
+
+// ==========================
+// EXCEL
+// ==========================
+
+model Excel {
+  excelId BigInt @id @default(autoincrement())
+  userId  BigInt
+
+  title String?
+  file  String?
+
+  user User @relation(
+    fields: [userId],
+    references: [userId],
+    onDelete: Cascade
+  )
+}
+
+
+// ==========================
+// OTP SYSTEM
+// ==========================
+
+model OtpSystem {
+  otpId  BigInt @id @default(autoincrement())
+  userId BigInt
+
+  type String?
+  otp  String?
+
+  user User @relation(
+    fields: [userId],
+    references: [userId],
+    onDelete: Cascade
+)
+}

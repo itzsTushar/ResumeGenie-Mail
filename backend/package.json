@@ -1,0 +1,18 @@
+{
+  "name": "rgmback",
+  "version": "1.0.0",
+  "description": "backedn of the resumegenie mail service devloped for the help of those students and job seekers whose are frusted after apply multiple jobs manually...",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \\\"Error: no test specified\\\" && exit 1"
+  },
+  "keywords": [
+    "backend"
+  ],
+  "author": "Tushar Sharma",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^7.10.0",
+    "prisma": "^7.10.0"
+  }
+}
