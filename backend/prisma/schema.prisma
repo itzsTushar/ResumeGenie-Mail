@@ -1,17 +1,18 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
-
-// ==========================
-// USER
-// ==========================
-
+// User Model
 model User {
   userId            BigInt   @id @default(autoincrement())
   name              String
@@ -22,20 +23,16 @@ model User {
   accessToken       String?
   refreshToken      String?
   avatar            String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
+  // Relations
   resumes    Resume[]
   excels     Excel[]
   otpSystems OtpSystem[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
-
-// ==========================
-// RESUME
-// ==========================
-
+// Resume stores the user's resume information
 model Resume {
   resumeId BigInt @id @default(autoincrement())
   userId   BigInt
@@ -45,13 +42,10 @@ model Resume {
   mobileNo     String?
   introduction String?
   address      String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  user User @relation(
-    fields: [userId],
-    references: [userId],
-    onDelete: Cascade
-  )
-
+  user           User            @relation(fields: [userId], references: [userId], onDelete: Cascade)
   educations     Education[]
   experiences    Experience[]
   projects       Project[]
@@ -59,16 +53,9 @@ model Resume {
   research       Research[]
   skills         ResumeSkill[]
   links          ResumeLink[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
-
-// ==========================
-// EDUCATION
-// ==========================
-
+// Education details associated with a resume
 model Education {
   educationId BigInt @id @default(autoincrement())
   resumeId    BigInt
@@ -81,18 +68,10 @@ model Education {
   cgpa        Decimal? @db.Decimal(4, 2)
   description String?
 
-  resume Resume @relation(
-    fields: [resumeId],
-    references: [resumeId],
-    onDelete: Cascade
-  )
+  resume Resume @relation(fields: [resumeId], references: [resumeId], onDelete: Cascade)
 }
 
-
-// ==========================
-// COMPANY
-// ==========================
-
+// Company information for work experience
 model Company {
   companyId BigInt @id @default(autoincrement())
 
@@ -101,16 +80,13 @@ model Company {
   hrEmail     String?
   description String?
 
+  // Relations
   experiences Experience[]
 }
 
-
-// ==========================
-// EXPERIENCE
-// ==========================
-
+// Work experience associated with a resume
 model Experience {
-  experienceId BigInt @id @default(autoincrement())
+  experienceId BigInt  @id @default(autoincrement())
   resumeId     BigInt
   companyId    BigInt?
 
@@ -119,24 +95,11 @@ model Experience {
   endDate     DateTime?
   description String?
 
-  resume Resume @relation(
-    fields: [resumeId],
-    references: [resumeId],
-    onDelete: Cascade
-  )
-
-  company Company? @relation(
-    fields: [companyId],
-    references: [companyId],
-    onDelete: SetNull
-  )
+  resume  Resume   @relation(fields: [resumeId], references: [resumeId], onDelete: Cascade)
+  company Company? @relation(fields: [companyId], references: [companyId], onDelete: SetNull)
 }
 
-
-// ==========================
-// PROJECT
-// ==========================
-
+// Project details associated with a resume
 model Project {
   projectId BigInt @id @default(autoincrement())
   resumeId  BigInt
@@ -149,18 +112,10 @@ model Project {
   startDate    DateTime?
   endDate      DateTime?
 
-  resume Resume @relation(
-    fields: [resumeId],
-    references: [resumeId],
-    onDelete: Cascade
-  )
+  resume Resume @relation(fields: [resumeId], references: [resumeId], onDelete: Cascade)
 }
 
-
-// ==========================
-// CERTIFICATION
-// ==========================
-
+// Certification details associated with a resume
 model Certification {
   certificationId BigInt @id @default(autoincrement())
   resumeId        BigInt
@@ -171,18 +126,10 @@ model Certification {
   credentialId  String?
   credentialUrl String?
 
-  resume Resume @relation(
-    fields: [resumeId],
-    references: [resumeId],
-    onDelete: Cascade
-  )
+  resume Resume @relation(fields: [resumeId], references: [resumeId], onDelete: Cascade)
 }
 
-
-// ==========================
-// RESEARCH
-// ==========================
-
+// Research and publication details associated with a resume
 model Research {
   researchId BigInt @id @default(autoincrement())
   resumeId   BigInt
@@ -195,55 +142,31 @@ model Research {
   abstract String?
   url      String?
 
-  resume Resume @relation(
-    fields: [resumeId],
-    references: [resumeId],
-    onDelete: Cascade
-  )
+  resume Resume @relation(fields: [resumeId], references: [resumeId], onDelete: Cascade)
 }
 
-
-// ==========================
-// SKILL
-// ==========================
-
+// Skills master table
 model Skill {
   skillId BigInt @id @default(autoincrement())
 
   name String @unique
 
+  // Relations
   resumes ResumeSkill[]
 }
 
-
-// ==========================
-// RESUME ↔ SKILL
-// ==========================
-
+// Junction: Resume ↔ Skill
 model ResumeSkill {
   resumeId BigInt
   skillId  BigInt
 
-  resume Resume @relation(
-    fields: [resumeId],
-    references: [resumeId],
-    onDelete: Cascade
-  )
-
-  skill Skill @relation(
-    fields: [skillId],
-    references: [skillId],
-    onDelete: Cascade
-  )
+  resume Resume @relation(fields: [resumeId], references: [resumeId], onDelete: Cascade)
+  skill  Skill  @relation(fields: [skillId], references: [skillId], onDelete: Cascade)
 
   @@id([resumeId, skillId])
 }
 
-
-// ==========================
-// RESUME LINKS
-// ==========================
-
+// Links associated with a resume
 model ResumeLink {
   resumeLinkId BigInt @id @default(autoincrement())
   resumeId     BigInt
@@ -251,17 +174,10 @@ model ResumeLink {
   type String
   url  String
 
-  resume Resume @relation(
-    fields: [resumeId],
-    references: [resumeId],
-    onDelete: Cascade
+  resume Resume @relation(fields: [resumeId], references: [resumeId], onDelete: Cascade)
 }
 
-
-// ==========================
-// EXCEL
-// ==========================
-
+// Excel files uploaded by a user
 model Excel {
   excelId BigInt @id @default(autoincrement())
   userId  BigInt
@@ -269,28 +185,18 @@ model Excel {
   title String?
   file  String?
 
-  user User @relation(
-    fields: [userId],
-    references: [userId],
-    onDelete: Cascade
-  )
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
 
-
-// ==========================
-// OTP SYSTEM
-// ==========================
-
+// OTP system for user authentication/verification
 model OtpSystem {
   otpId  BigInt @id @default(autoincrement())
   userId BigInt
 
-  type String?
-  otp  String?
+  type      String?
+  otp       String?
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
 
-  user User @relation(
-    fields: [userId],
-    references: [userId],
-    onDelete: Cascade
-)
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
 }
