@@ -1,9 +1,11 @@
 {
   "name": "rgmback",
   "version": "1.0.0",
-  "description": "backedn of the resumegenie mail service devloped for the help of those students and job seekers whose are frusted after apply multiple jobs manually...",
-  "main": "index.js",
+  "description": "backend of the ResumeGenie-Mail service devloped for the help of those students and job seekers whose are frusted after apply multiple jobs manually...",
   "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
     "test": "echo \\\"Error: no test specified\\\" && exit 1"
   },
   "keywords": [
@@ -12,7 +14,24 @@
   "author": "Tushar Sharma",
   "license": "ISC",
   "dependencies": {
+    "@google/genai": "^2.30.0",
     "@prisma/client": "^7.10.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "csv-parser": "^3.2.1",
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0",
+    "json2csv": "^6.0.0-alpha.2",
+    "multer": "^2.4.0",
     "prisma": "^7.10.0"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.3.0",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.3"
   }
 }
