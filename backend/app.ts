@@ -31,4 +31,7 @@ app.get("/",(_,res)=>{
 		message : "ResumeGenie-Mail Backedn is Running",
 		})
 	});
+import userRouter from"./routes/user.routes.ts";
+app.use("/user",userRouter);
+
 export default app;

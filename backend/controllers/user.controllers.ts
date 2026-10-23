@@ -2,7 +2,7 @@ import {Request , Response } from "express";
 import fs from "fs";
 import {ApiError} from "../utilis/apierror.ts";
 import {ApiResponse} from "../utilis/apiresponse.ts";
-import { asyncHandler } from "../utilis/asyncHandler.ts";
+import { asyncHandler } from "../utilis/asynchandler.ts";
 import {prisma} from "../database/database.ts";
 import {generateRefreshtoken , generateAccesstoken, decodeToken } from "../handler/token.handler.ts";
 import {sendEmail} from "../handler/gmail.handler.ts";
@@ -13,20 +13,21 @@ import {generateHashPassword} from "../handler/password.handler.ts";
 //create user first
 const registerUser = asyncHandler(async (req : Request , res : Response) => {
 // get the req.body
+	//console.log(req.body);
 	const {username , email , password} = req.body
 //check username email and password are their else throw new ApiError(400,"all filed are required")
-	if([username,email,password].some((filed)=>{
-		filed?.trim()=="
-	})){
-		throw new ApiError(400,"All fileds are required");
-	}
+	//console.log(username,email,password);
+	if ([username, email, password].some((field) => !field?.trim())) {
+    	throw new ApiError(400, "All fields are required");
+    	}
 // check username or email exist then throw new ApiError(409,username or email is already exist)
-	const existingUser = await prisma.user.findFirst({
+	console.log("hello0");
+	const existingUser = await prisma.User.findFirst({
 		where : {
-			OR : [{username},{email}]
-			}
-		}
-	});
+			OR : [{username},{email}],
+			},
+		});
+	console.log("hello1");
 	if(existingUser.username === username){
 		throw new ApiError(409,"Username already exists");
 		}
@@ -43,7 +44,7 @@ const registerUser = asyncHandler(async (req : Request , res : Response) => {
                 username,
                 email,
                 mobileNo: mobileNo || null,
-                passwordEncrypted: hashedPassword
+                passwordEncrypted: hashedPassword,
                 refreshToken : refreshToken || null,
                 
             }
