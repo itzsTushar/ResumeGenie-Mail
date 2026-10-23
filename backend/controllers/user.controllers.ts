@@ -7,7 +7,7 @@ import prisma from "../database/database.ts";
 import {generateRefreshToken , generateAccessToken, decodeToken } from "../handler/token.handler.ts";
 import {sendEmail} from "../handler/gmail.handler.ts";
 import {generateOtp} from "../handler/otp.handler.ts";
-import {generateHashPassword} from "../handler/password.handler.ts";
+import {generateHashPassword,validateHashPassword} from "../handler/password.handler.ts";
 import "dotenv/config";
 
 // Todo list
@@ -215,4 +215,149 @@ const validateOTPRegistration = asyncHandler(async (req: Request, res: Response)
     }
 );
 
-export { registerUser, validateOTPRegistration};
+const loginUser = asyncHandler(async (req: Request, res: Response) => {
+
+        // 1. Get email and password
+        const { email, password } = req.body;
+
+        // 2. Validate required fields
+        if (!email?.trim() || !password) {
+            throw new ApiError(
+                400,
+                "Email and password are required"
+            );
+        }
+
+        // 3. Find user by email
+        const user = await prisma.user.findUnique({
+            where: {
+                email: email.trim()
+            },
+            select: {
+                userId: true,
+                username: true,
+                email: true,
+                passwordEncrypted: true
+            }
+        });
+
+        if (!user || !user.passwordEncrypted) {
+            throw new ApiError(401, "Invalid email or password");
+        }
+
+        // 4. Validate password
+        const isPasswordValid = await validateHashPassword(password,user.passwordEncrypted);
+        //console.log(isPasswordValid);
+
+        if (!isPasswordValid) {
+            throw new ApiError(401, "Invalid email or password");
+        }
+
+        // 5. Generate access token
+        const accessToken = await generateAccessToken(
+            user.userId.toString(),
+            user.username,
+            user.email
+        );
+
+        // 6. Generate refresh token
+        const refreshToken = await generateRefreshToken(
+            user.userId.toString(),
+            user.username,
+            user.email
+        );
+
+        // 7. Save tokens in database
+        await prisma.user.update({
+            where: {
+                userId: user.userId
+            },
+            data: {
+                accessToken,
+                refreshToken
+            }
+        });
+
+        // 8. Cookie options
+        const options = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "strict" as const
+        };
+
+        // 9. Send response and cookies
+        return res.status(200).cookie("accessToken", accessToken, {
+                ...options,
+                maxAge: 15 * 60 * 1000
+            }).cookie("refreshToken", refreshToken, {
+                ...options,
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            }).json(new ApiResponse(
+                    200,
+                    {
+                        userId: user.userId.toString(),
+                        username: user.username,
+                        email: user.email,
+                        accessToken,
+                        refreshToken
+                    },
+                    "User logged in successfully"
+                )
+            );
+    }
+);
+
+
+const logoutUser = asyncHandler(async (req: Request, res: Response) => {
+	//as it get the request check it has cookies
+	const accessToken = req.cookies?.accessToken;
+	//console.log(accessToken);
+
+	if (!accessToken) {
+		throw new ApiError(401, "Access token not found");
+	}
+
+	//find decode the token accesstoke and find the userID
+	const decoded = await decodeToken(accessToken,process.env.ACCESS_TOKEN_SECRET!) as jwt.JwtPayload;
+
+	if (!decoded._id) {
+		throw new ApiError(401, "Invalid access token");
+	}
+
+	const userId = BigInt(decoded._id);
+
+	// set the acesstoken null in user table using userId
+	await prisma.user.update({
+		where: {
+			userId: userId
+		},
+		data: {
+			accessToken: null,
+			refreshToken: null
+		}
+	});
+
+	//remove the accsesstoken from cookies
+	const options = {
+		httpOnly: true,
+		secure: process.env.NODE_ENV === "production",
+		sameSite: "strict" as const
+	};
+
+	res.clearCookie("accessToken", options);
+	//res.clearCookie("refreshToken", options);
+	res.clearCookie("registerToken", options);
+
+	//return res the user logout
+	return res
+		.status(200)
+		.json(new ApiResponse(200, {}, "User logged out successfully"));
+});
+
+
+export {
+registerUser, 
+validateOTPRegistration,
+loginUser,
+logoutUser
+}

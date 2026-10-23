@@ -31,7 +31,7 @@ const generateAccessToken = async function(id:string,username:string,email:strin
 		}
 	}
 
-const decodeToken = async function(token:string,secret:string){
+const decodeToken = async function(token:string,secret:string=process.env.ACCESS_TOKEN_SECRET!){
 	try{
 		if(!token){
 			throw new ApiError(401,"Unauthorised request");
