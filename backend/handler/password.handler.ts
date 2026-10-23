@@ -3,8 +3,7 @@ import bcrypt from "bcrypt";
 const generateHashPassword = async function (
     password: string
 ): Promise<string> {
-    const saltRounds = 12;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    const hashedPassword = await bcrypt.hash(password, 12);
 
     return hashedPassword;
 };

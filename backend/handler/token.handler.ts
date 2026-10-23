@@ -31,12 +31,12 @@ const generateAccessToken = async function(id:string,username:string,email:strin
 		}
 	}
 
-const decodeToken = async function(token:string){
+const decodeToken = async function(token:string,secret:string){
 	try{
 		if(!token){
 			throw new ApiError(401,"Unauthorised request");
 			}
-		return jwt.verify(token,process.env.ACCESS_TOKEN_SECRET!);
+		return jwt.verify(token,secret);
 		}catch(err){
 			if(err instanceof ApiError) {
 				throw err;

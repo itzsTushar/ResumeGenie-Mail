@@ -1,6 +1,6 @@
 import { google } from "googleapis";
-import nodemailer from "nodemailer";
 import "dotenv/config";
+
 const oAuth2Client = new google.auth.OAuth2(
     process.env.OAUTH_CLIENT_ID,
     process.env.OAUTH_CLIENT_SECRET,
@@ -11,43 +11,45 @@ oAuth2Client.setCredentials({
     refresh_token: process.env.GMAIL_REFRESH_TOKEN
 });
 
-const sendEmail = async function (
-    toGmail: string,
-    otp: string
-): Promise<void> {
+const sendEmail = async function (toGmail: string, otp: string): Promise<void> {
     try {
-        const accessTokenResponse = await oAuth2Client.getAccessToken();
-        const accessToken = accessTokenResponse.token;
+        console.log("1. Initializing Gmail API client...");
+        const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
-        if (!accessToken) {
-            throw new Error("Failed to obtain Gmail access token");
-        }
+        const subject = "OTP for Registration";
+        const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString("base64")}?=`;
+        
+        const messageParts = [
+            `To: ${toGmail}`,
+            `Subject: ${utf8Subject}`,
+            `MIME-Version: 1.0`,
+            `Content-Type: text/html; charset=utf-8`,
+            ``,
+            `<p>Your OTP is: <b>${otp}</b></p><p>This OTP expires in 5 minutes.</p>`
+        ];
+        
+        const message = messageParts.join("\n");
 
-        const transport = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                type: "OAuth2",
-                user: process.env.AUTH_USER_EMAIL,
-                clientId: process.env.OAUTH_CLIENT_ID,
-                clientSecret: process.env.OAUTH_CLIENT_SECRET,
-                refreshToken: process.env.GMAIL_REFRESH_TOKEN,
-                accessToken
-            }
+        // Encode the message in base64url format required by Gmail API
+        const encodedMessage = Buffer.from(message)
+            .toString("base64")
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, "");
+
+        console.log("2. Sending mail via Gmail API...");
+        await gmail.users.messages.send({
+            userId: "me",
+            requestBody: {
+                raw: encodedMessage,
+            },
         });
 
-        const mailOption = {
-            from: `ResumenGeninMail Registertaion <${process.env.AUTH_USER_EMAIL}>`,
-            to: toGmail,
-            subject: "OTP for Registration",
-            text: `Your OTP is ${otp}. It expires in 5 minutes.`,
-            html: `<p>Your OTP is: <b>${otp}</b></p>
-                   <p>This OTP expires in 5 minutes.</p>`
-        };
-
-        await transport.sendMail(mailOption);
+        console.log("3. Mail sent successfully via Gmail API!");
     } catch (err) {
-    	throw new ApiError(501,"Failed To Send OTP");
+        console.error("ERROR IN sendEmail:", err);
+        throw new Error("Failed To Send OTP");
     }
 };
 
-export{sendEmail};
+export { sendEmail };

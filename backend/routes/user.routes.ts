@@ -1,8 +1,8 @@
 import {Router} from "express";
-import {registerUser} from "../controllers/user.controllers.ts";
+import {registerUser,validateOTPRegistration} from "../controllers/user.controllers.ts";
 
 const userRouter = Router();
 
 userRouter.post("/register",registerUser);
-
+userRouter.post("/register/otpval",validateOTPRegistration);
 export default userRouter;
