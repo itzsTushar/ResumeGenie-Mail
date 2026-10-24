@@ -36,25 +36,6 @@ const uploadonCloudinary = async (
         }
     }
 };
-const getPrivatePdfUrl = (input: string): string => {
-    let publicId = input;
 
-    // If a full URL was accidentally passed, extract the public ID from it
-    if (input.startsWith("http")) {
-        const urlParts = input.split("/upload/");
-        if (urlParts.length > 1) {
-            // Remove version part (e.g., v179fffgd36020/) and file extension if present
-            const pathAfterUpload = urlParts[1].replace(/^v\d+\//, "");
-            publicId = pathAfterUpload.substring(0, pathAfterUpload.lastIndexOf(".")) || pathAfterUpload;
-        }
-    }
-
-    return cloudinary.url(publicId, {
-        resource_type: "raw", // or "image" depending on your upload type
-        type: "private",
-        sign_url: true,
-        secure: true,
-    });
-};
-export { uploadonCloudinary,getPrivatePdfUrl };
+export { uploadonCloudinary };
 
