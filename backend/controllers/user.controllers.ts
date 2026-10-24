@@ -9,7 +9,7 @@ import {sendEmail} from "../handler/gmail.handler.ts";
 import {generateOtp} from "../handler/otp.handler.ts";
 import {generateHashPassword,validateHashPassword} from "../handler/password.handler.ts";
 import "dotenv/config";
-
+import {uploadonCloudinary} from "../handler/file.handler.ts";
 // Todo list
 //create user first
 const registerUser = asyncHandler(async (req : Request , res : Response) => {
@@ -354,10 +354,91 @@ const logoutUser = asyncHandler(async (req: Request, res: Response) => {
 		.json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
+const updateProfile = asyncHandler(async (req: Request, res: Response) => {
+	// take the req.body and req.files
+	console.log(req.body);
+	const { name, mobileNo } = req.body;
+	
+	const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
-export {
+	//fetch the accessToken find the decoded it using decodeToken()  and find user_id from it i access taken not present throw apierror
+	const accessToken = req.cookies?.accessToken;
+
+	if (!accessToken) {
+		throw new ApiError(401, "Access token is required");
+	}
+
+	const decodedToken =await decodeToken(accessToken,process.env.ACCESS_TOKEN_SECRET!) as jwt.JwtPayload;
+	console.log(decodedToken);
+	console.log(decodedToken._id);
+	const userId = decodedToken._id;
+	console.log(userId);
+	if (!userId) {
+		throw new ApiError(401, "Invalid access token");
+	}
+
+	//check avatar is in req.files if it is then upload on cloudnary by using function - > uploadonCloudinary, save the url in a var
+	let avatarUrl: string | undefined;
+
+	if (files?.avatar?.[0]) {
+		const avatarResponse = await uploadonCloudinary(files.avatar[0].path);
+
+		if (!avatarResponse) {
+			throw new ApiError(500, "Avatar upload failed");
+		}
+
+		avatarUrl = avatarResponse.secure_url;
+	}
+
+	//check the reume is in req.file if it is then upload on cloudinary by using function -> uploadonCloudinary,save a url in var
+	let resumeUrl: string | undefined;
+
+	if (files?.resume?.[0]) {
+		const resumeResponse = await uploadonCloudinary(files.resume[0].path);
+
+		if (!resumeResponse) {
+			throw new ApiError(500, "Resume upload failed");
+		}
+
+		resumeUrl = resumeResponse.secure_url;
+	}
+
+	// if req.body contain any {name , mobile no } then save it var
+	const updateData: {
+		name?: string;
+		mobileNo?: string;
+		avatar?: string;
+		resume?: string;
+	} = {};
+
+	if (name !== undefined) updateData.name = name;
+	if (mobileNo !== undefined) updateData.mobileNo = mobileNo;
+	if (avatarUrl !== undefined) updateData.avatar = avatarUrl;
+	if (resumeUrl !== undefined) updateData.resume = resumeUrl;
+
+	// upate the user table with all value
+	const updatedUser = await prisma.user.update({
+		where: {
+			userId: userId,
+		},
+		data: updateData,
+	});
+
+	//give teh apiresponse
+	return res
+		.status(200)
+		.json(
+			JSON.parse(
+				JSON.stringify(updatedUser, (_key, value) =>
+					typeof value === "bigint" ? value.toString() : value
+				)
+			)
+		);
+});
+export{
 registerUser, 
 validateOTPRegistration,
 loginUser,
-logoutUser
+logoutUser,
+updateProfile
 }

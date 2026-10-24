@@ -34,4 +34,7 @@ app.get("/",(_,res)=>{
 import userRouter from"./routes/user.routes.ts";
 app.use("/user",userRouter);
 
+import resumeRouter from "./routes/resume.routes.ts";
+app.use("/user/resume",resumeRouter);
+
 export default app;
