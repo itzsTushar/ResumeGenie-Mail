@@ -10,6 +10,8 @@ import {generateOtp} from "../handler/otp.handler.ts";
 import {generateHashPassword,validateHashPassword} from "../handler/password.handler.ts";
 import "dotenv/config";
 import {uploadonCloudinary} from "../handler/file.handler.ts";
+//import {resumeData} from "./resume.controllers.ts";
+import {resumeData} from "./del.ts";
 // Todo list
 //create user first
 const registerUser = asyncHandler(async (req : Request , res : Response) => {
@@ -435,10 +437,238 @@ const updateProfile = asyncHandler(async (req: Request, res: Response) => {
 			)
 		);
 });
+const updateUserbyResumeData = asyncHandler(async (req: Request, res: Response) => {
+	//get the acessToken
+	const accessToken = req.cookies?.accessToken;
+
+	//if access token not throw ApiError
+	if (!accessToken) {
+		throw new ApiError(401, "Access token is required");
+	}
+
+	//decode the token using decoedToken() function
+	let decodedToken;
+
+	try {
+		decodedToken = await decodeToken(accessToken);
+	} catch (error) {
+		throw new ApiError(401, "Invalid or expired access token");
+	}
+
+	// if decode fail thorw api error,
+	if (!decodedToken || typeof decodedToken === "string") {
+		throw new ApiError(401, "Unable to decode access token");
+	}
+
+	//find user id if not present throw api error
+	if (!decodedToken._id) {
+		throw new ApiError(401, "User ID not found in access token");
+	}
+
+	const userId = BigInt(decodedToken._id);
+
+	const user = await prisma.user.findUnique({
+		where: {
+			userId: userId
+		}
+	});
+
+	if (!user) {
+		throw new ApiError(404, "User not found");
+	}
+
+	//if global var resumeData is undefined thorw api error : resume is not parsed yet
+	console.log(resumeData);
+	if (
+		typeof resumeData === "undefined" ||
+		!resumeData ||
+		!resumeData.resume
+	) {
+		throw new ApiError(400, "Resume is not parsed yet");
+	}
+
+	const data = resumeData;
+
+	//here is the resumeData pasted and all the table pasted , u need to save the data in db according to resumeData and tables
+	const savedResume = await prisma.$transaction(async (tx) => {
+
+		// Save the main resume details
+		const resume = await tx.resume.create({
+			data: {
+				userId: userId,
+				name: data.resume.name ?? null,
+				email: data.resume.email ?? null,
+				mobileNo: data.resume.mobileNo ?? null,
+				introduction: data.resume.introduction ?? null,
+				address: data.resume.address ?? null
+			}
+		});
+
+		// Save education details
+		for (const education of data.educations ?? []) {
+			await tx.education.create({
+				data: {
+					resumeId: resume.resumeId,
+					institution: education.institution ?? null,
+					degree: education.degree ?? null,
+					field: education.field ?? null,
+					startYear: education.startYear ?? null,
+					endYear: education.endYear ?? null,
+					cgpa: education.cgpa ?? null,
+					description: education.description ?? null
+				}
+			});
+		}
+
+		// Save experience details and associated companies
+		for (const experience of data.experiences ?? []) {
+			let companyId: bigint | null = null;
+
+			if (experience.company) {
+				const company = await tx.company.findFirst({
+					where: {
+						name: experience.company
+					}
+				});
+
+				const savedCompany = company ?? await tx.company.create({
+					data: {
+						name: experience.company
+					}
+				});
+
+				companyId = savedCompany.companyId;
+			}
+
+			await tx.experience.create({
+				data: {
+					resumeId: resume.resumeId,
+					companyId: companyId,
+					role: experience.role ?? null,
+					startDate: experience.startDate
+						? new Date(experience.startDate)
+						: null,
+					endDate: experience.endDate
+						? new Date(experience.endDate)
+						: null,
+					description: experience.description ?? null
+				}
+			});
+		}
+
+		// Save project details
+		for (const project of data.projects ?? []) {
+			await tx.project.create({
+				data: {
+					resumeId: resume.resumeId,
+					title: project.title,
+					description: project.description ?? null,
+					technologies: project.technologies ?? null,
+					github: project.github ?? null,
+					liveLink: project.liveLink ?? null,
+					startDate: project.startDate
+						? new Date(project.startDate)
+						: null,
+					endDate: project.endDate
+						? new Date(project.endDate)
+						: null
+				}
+			});
+		}
+
+		// Save certification details
+		for (const certification of data.certifications ?? []) {
+			await tx.certification.create({
+				data: {
+					resumeId: resume.resumeId,
+					name: certification.name,
+					issuer: certification.issuer ?? null,
+					issueDate: certification.issueDate
+						? new Date(certification.issueDate)
+						: null,
+					credentialId: certification.credentialId ?? null,
+					credentialUrl: certification.credentialUrl ?? null
+				}
+			});
+		}
+
+		// Save research details
+		for (const research of data.research ?? []) {
+			await tx.research.create({
+				data: {
+					resumeId: resume.resumeId,
+					topic: research.topic ?? null,
+					title: research.title ?? null,
+					journal: research.journal ?? null,
+					year: research.year ?? null,
+					doi: research.doi ?? null,
+					abstract: research.abstract ?? null,
+					url: research.url ?? null
+				}
+			});
+		}
+
+		// Save skills and link them to the resume
+		for (const skill of data.skills ?? []) {
+			const skillName = skill.name?.trim();
+
+			if (!skillName) {
+				continue;
+			}
+
+			const savedSkill = await tx.skill.upsert({
+				where: {
+					name: skillName
+				},
+				update: {},
+				create: {
+					name: skillName
+				}
+			});
+
+			await tx.resumeSkill.create({
+				data: {
+					resumeId: resume.resumeId,
+					skillId: savedSkill.skillId
+				}
+			});
+		}
+
+		// Save external links
+		for (const link of data.links ?? []) {
+			if (!link.type || !link.url) {
+				continue;
+			}
+
+			await tx.resumeLink.create({
+				data: {
+					resumeId: resume.resumeId,
+					type: link.type,
+					url: link.url
+				}
+			});
+		}
+
+		return resume;
+	});
+
+	// Return the saved resume
+	return res.status(201).json(
+		new ApiResponse(
+			201,
+			{
+				resumeId: savedResume.resumeId.toString(),
+				userId: userId.toString()
+			},
+			"Resume data saved successfully"
+		)
+	);
+});
 export{
 registerUser, 
 validateOTPRegistration,
 loginUser,
 logoutUser,
-updateProfile
+updateProfile,
+updateUserbyResumeData 
 }
