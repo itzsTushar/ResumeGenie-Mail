@@ -1,16 +1,16 @@
 import {Request , Response } from "express";
 import fs from "fs";
-import {ApiError} from "../utilis/apierror.ts";
-import {ApiResponse} from "../utilis/apiresponse.ts";
-import { asyncHandler } from "../utilis/asynchandler.ts";
-import prisma from "../database/database.ts";
-import {generateRefreshToken , generateAccessToken, decodeToken } from "../handler/token.handler.ts";
-import {sendEmail} from "../handler/gmail.handler.ts";
-import {generateOtp} from "../handler/otp.handler.ts";
-import {generateHashPassword,validateHashPassword} from "../handler/password.handler.ts";
+import {ApiError} from "../utilis/apierror";
+import {ApiResponse} from "../utilis/apiresponse";
+import { asyncHandler } from "../utilis/asynchandler";
+import prisma from "../database/database";
+import {generateRefreshToken , generateAccessToken, decodeToken } from "../handler/token.handler";
+import {sendEmail} from "../handler/gmail.handler";
+import {generateOtp} from "../handler/otp.handler";
+import {generateHashPassword,validateHashPassword} from "../handler/password.handler";
 import "dotenv/config";
-import {uploadonCloudinary} from "../handler/file.handler.ts";
-import {resumeData} from "./resume.controllers.ts";
+import {uploadonCloudinary} from "../handler/file.handler";
+import {resumeData} from "./resume.controllers";
 //import {resumeData} from "./del.ts";
 // Todo list
 //create user first

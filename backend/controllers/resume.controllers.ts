@@ -1,13 +1,13 @@
 import {Request , Response } from "express";
 import fs from "fs";
-import {ApiError} from "../utilis/apierror.ts";
-import {ApiResponse} from "../utilis/apiresponse.ts";
-import { asyncHandler } from "../utilis/asynchandler.ts";
-import prisma from "../database/database.ts";
-import { decodeToken } from "../handler/token.handler.ts";
+import {ApiError} from "../utilis/apierror";
+import {ApiResponse} from "../utilis/apiresponse";
+import { asyncHandler } from "../utilis/asynchandler";
+import prisma from "../database/database";
+import { decodeToken } from "../handler/token.handler";
 import "dotenv/config";
-import {callGemini} from "../handler/gemini.handler.ts";
-import {RESUME_FETCH_PROMPT} from "../prompt/gemini.prompt.ts";
+import {callGemini} from "../handler/gemini.handler";
+import {RESUME_FETCH_PROMPT} from "../prompt/gemini.prompt";
 
 
 // make global variable for save the user data in different tables

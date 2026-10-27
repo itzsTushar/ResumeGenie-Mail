@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken"
-import { ApiError } from "../utilis/apierror.ts"
+import { ApiError } from "../utilis/apierror"
 import "dotenv/config";
 
 

@@ -31,13 +31,13 @@ app.get("/",(_,res)=>{
 		message : "ResumeGenie-Mail Backedn is Running",
 		})
 	});
-import userRouter from"./routes/user.routes.ts";
+import userRouter from"./routes/user.routes";
 app.use("/user",userRouter);
 
-import resumeRouter from "./routes/resume.routes.ts";
+import resumeRouter from "./routes/resume.routes";
 app.use("/user/resume",resumeRouter);
 
-import companyRouter from "./routes/company.routes.ts";
+import companyRouter from "./routes/company.routes";
 app.use("/user/mail",companyRouter);
 
 export default app;

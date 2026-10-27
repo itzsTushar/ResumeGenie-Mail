@@ -1,7 +1,7 @@
 import {Router} from "express";
 import {registerUser,validateOTPRegistration,
-loginUser,logoutUser,updateProfile,updateUserbyResumeData,getUserData} from "../controllers/user.controllers.ts";
-import {upload} from "../middleware/multer.middleware.ts";
+loginUser,logoutUser,updateProfile,updateUserbyResumeData,getUserData} from "../controllers/user.controllers";
+import {upload} from "../middleware/multer.middleware";
 const userRouter = Router();
 
 userRouter.post("/register",registerUser);

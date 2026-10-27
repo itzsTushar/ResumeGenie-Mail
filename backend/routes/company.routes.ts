@@ -1,5 +1,5 @@
 import {Router} from "express";
-import {sendJobMailtoCompany} from "../controllers/company.controllers.ts";
+import {sendJobMailtoCompany} from "../controllers/company.controllers";
 
 const companyRouter = Router();
 companyRouter.post("/mailcontent",sendJobMailtoCompany);

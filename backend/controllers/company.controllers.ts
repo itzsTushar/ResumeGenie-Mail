@@ -1,14 +1,14 @@
 import {Request , Response } from "express";
 import fs from "fs";
-import {ApiError} from "../utilis/apierror.ts";
-import {ApiResponse} from "../utilis/apiresponse.ts";
-import { asyncHandler } from "../utilis/asynchandler.ts";
-import prisma from "../database/database.ts";
-import { decodeToken } from "../handler/token.handler.ts";
+import {ApiError} from "../utilis/apierror";
+import {ApiResponse} from "../utilis/apiresponse";
+import { asyncHandler } from "../utilis/asynchandler";
+import prisma from "../database/database";
+import { decodeToken } from "../handler/token.handler";
 import "dotenv/config";
-import {callGemini} from "../handler/gemini.handler.ts";
-import {RESUME_FETCH_PROMPT} from "../prompt/gemini.prompt.ts";
-import {geminiJobEmail} from "../handler/gemini.handler.ts";
+import {callGemini} from "../handler/gemini.handler";
+import {RESUME_FETCH_PROMPT} from "../prompt/gemini.prompt";
+import {geminiJobEmail} from "../handler/gemini.handler";
 
 const sendJobMailtoCompany = asyncHandler(async (req: Request, res: Response) => {
 	// get the req.body

@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import "dotenv/config";
-import { getPrivatePdfUrl } from "./file.handler.ts";
-import JOB_EMAIL_PROMPT from "../prompt/gemini.prompt.ts";
+import { getPrivatePdfUrl } from "./file.handler";
+import JOB_EMAIL_PROMPT from "../prompt/gemini.prompt";
 const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY!,
 });
