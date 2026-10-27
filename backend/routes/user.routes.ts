@@ -1,6 +1,6 @@
 import {Router} from "express";
 import {registerUser,validateOTPRegistration,
-loginUser,logoutUser,updateProfile,updateUserbyResumeData} from "../controllers/user.controllers.ts";
+loginUser,logoutUser,updateProfile,updateUserbyResumeData,getUserData} from "../controllers/user.controllers.ts";
 import {upload} from "../middleware/multer.middleware.ts";
 const userRouter = Router();
 
@@ -17,4 +17,5 @@ userRouter.post(
 	updateProfile
 );
 userRouter.get("/resumedata",updateUserbyResumeData );
+userRouter.get("/account",getUserData);
 export default userRouter;

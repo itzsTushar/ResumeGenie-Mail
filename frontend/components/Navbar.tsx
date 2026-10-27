@@ -1,56 +1,130 @@
+
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import AuthModal from "./auth/AuthModal";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
+
+const links = [
+  { href: "/", label: "Home" },
+  { href: "/account", label: "Account" },
+  { href: "/mail-generation", label: "Mail Generation" },
+];
 
 export default function Navbar() {
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function checkAuthentication() {
+      setCheckingAuth(true);
+
+      try {
+        await api.getAccount();
+
+        if (active) {
+          setAuthenticated(true);
+        }
+      } catch {
+        if (active) {
+          setAuthenticated(false);
+        }
+      } finally {
+        if (active) {
+          setCheckingAuth(false);
+        }
+      }
+    }
+
+    void checkAuthentication();
+
+    return () => {
+      active = false;
+    };
+  }, [pathname]);
+
+  async function handleLogout() {
+    setBusy(true);
+
+    try {
+      await api.logout();
+      setAuthenticated(false);
+      setMenuOpen(false);
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Logout failed");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
-    <>
-      <header className="w-full h-16 bg-[#f7f7f7] border-b border-gray-200">
-        <div className="max-w-7xl mx-auto h-full flex items-center justify-between px-6">
+    <header className="site-header">
+      <div className="nav-container">
+        <Link href="/" className="brand">
+          <span className="brand-mark">R</span>
+          <span>
+            ResumeGenie<span className="brand-accent">-Mail</span>
+          </span>
+        </Link>
 
-          {/* Left Side */}
-          <div className="flex items-center gap-4">
-            <button className="text-2xl">
-              ☰
-            </button>
+        <button
+          type="button"
+          className="mobile-menu"
+          onClick={() => setMenuOpen((previous) => !previous)}
+          aria-label="Toggle navigation"
+          aria-expanded={menuOpen}
+        >
+          {menuOpen ? "✕" : "☰"}
+        </button>
 
-            <h1 className="text-2xl font-bold">
-              ResumeGenie-Mail
-            </h1>
-          </div>
-
-          {/* Right Side */}
-          <nav
-            className="flex items-center gap-8
-              [&>a]:transition-all
-              [&>a]:duration-300
-              [&>a]:ease-in-out
-              [&>a]:hover:scale-110
-              [&>a]:hover:text-blue-600"
-          >
-            <Link href="/">Home</Link>
-
-            <Link href="/resume">Resume</Link>
-
-            <button
-              onClick={() => setIsAuthOpen(true)}
-              className="transition-all duration-300 ease-in-out hover:scale-110 hover:text-blue-600"
+        <nav className={`nav-links ${menuOpen ? "nav-open" : ""}`}>
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              className={`nav-link ${
+                pathname === link.href ? "nav-link-active" : ""
+              }`}
             >
-              Login
-            </button>
-          </nav>
+              {link.label}
+            </Link>
+          ))}
 
-        </div>
-      </header>
-
-      <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-      />
-    </>
+          {!checkingAuth && (
+            <>
+              {!authenticated ? (
+                <Link
+                  href="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="button button-secondary nav-cta"
+                >
+                  Sign In
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  className="button button-quiet"
+                  onClick={() => void handleLogout()}
+                  disabled={busy}
+                >
+                  {busy ? "Signing out..." : "Sign Out"}
+                </button>
+              )}
+            </>
+          )}
+        </nav>
+      </div>
+    </header>
   );
 }

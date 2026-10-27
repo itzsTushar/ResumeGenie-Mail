@@ -50,12 +50,13 @@ const callGemini = async (
             ],
         });
 
-        return response.text ?? "";
+        return JSON.parse(response.text ?? "");
     } catch (error) {
         console.error("Gemini API Error:", error);
         throw error;
     }
 };
+
 const geminiJobEmail = async (
 	companyname: string,
 	hrname: string,
@@ -118,26 +119,40 @@ USER PROFILE AND COMPANY DATA (JSON):
 ${jsonData}
 `;
 
-	/*
-	const response = await ai.models.generateContent({
-		model: "gemini-3.8-flash",
-		contents: [
-			{ text: prompt }
-		],
-	});
-	*/
+	const maxRetries = 3;
+	let response;
 
-	const response = await ai.models.generateContent({
-		model: "gemini-3.8-flash",
-		contents: [
-			{
-				text: prompt
+	for (let attempt = 0; attempt <= maxRetries; attempt++) {
+		try {
+			response = await ai.models.generateContent({
+				model: "gemini-3.8-flash",
+				contents: [
+					{
+						text: prompt
+					}
+				]
+			});
+
+			break;
+		} catch (error: any) {
+			const status = error?.status ?? error?.code;
+
+			if (status !== 503 || attempt === maxRetries) {
+				throw error;
 			}
-		]
-	});
+
+			const delay = 1000 * Math.pow(2, attempt);
+
+			console.log(
+				`Gemini API returned 503. Retry ${attempt + 1}/${maxRetries} in ${delay / 1000} seconds.`
+			);
+
+			await new Promise((resolve) => setTimeout(resolve, delay));
+		}
+	}
 
 	//return the response
-	const emailContent = response.text?.trim();
+	const emailContent = response?.text?.trim();
 
 	if (!emailContent) {
 		throw new ApiError(500, "Failed to generate job application email");
@@ -145,4 +160,5 @@ ${jsonData}
 
 	return emailContent;
 };
+
 export { callGemini,geminiJobEmail };

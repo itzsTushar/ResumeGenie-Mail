@@ -50,7 +50,7 @@ const fetchResumeData = asyncHandler(async (req: Request, res: Response) => {
 	//console.log(user.resume);
 	//console.log(RESUME_FETCH_PROMPT);
 	resumeData = await callGemini(RESUME_FETCH_PROMPT, user.resume);
-
+	
 	//return the res.status that resume fetched
 	return res.status(200).json({
 		success: true,

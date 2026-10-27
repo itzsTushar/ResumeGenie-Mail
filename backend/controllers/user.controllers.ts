@@ -10,8 +10,8 @@ import {generateOtp} from "../handler/otp.handler.ts";
 import {generateHashPassword,validateHashPassword} from "../handler/password.handler.ts";
 import "dotenv/config";
 import {uploadonCloudinary} from "../handler/file.handler.ts";
-//import {resumeData} from "./resume.controllers.ts";
-import {resumeData} from "./del.ts";
+import {resumeData} from "./resume.controllers.ts";
+//import {resumeData} from "./del.ts";
 // Todo list
 //create user first
 const registerUser = asyncHandler(async (req : Request , res : Response) => {
@@ -664,11 +664,93 @@ const updateUserbyResumeData = asyncHandler(async (req: Request, res: Response) 
 		)
 	);
 });
+
+const getUserData = asyncHandler(async (req: Request, res: Response) => {
+    const accessToken = req.cookies?.accessToken;
+
+    if (!accessToken) {
+        throw new ApiError(401, "Access token is required");
+    }
+
+    let decodedToken;
+
+    try {
+        decodedToken = await decodeToken(
+            accessToken,
+            process.env.ACCESS_TOKEN_SECRET!
+        ) as jwt.JwtPayload;
+    } catch {
+        throw new ApiError(401, "Invalid or expired access token");
+    }
+
+    if (!decodedToken?._id) {
+        throw new ApiError(401, "Invalid access token");
+    }
+
+    const userId = BigInt(decodedToken._id);
+
+    const user = await prisma.user.findUnique({
+        where: {
+            userId,
+        },
+        select: {
+            userId: true,
+            name: true,
+            username: true,
+            email: true,
+            mobileNo: true,
+            avatar: true,
+            resume: true,
+            createdAt: true,
+            updatedAt: true,
+            resumes: {
+                include: {
+                    educations: true,
+                    experiences: {
+                        include: {
+                            company: true,
+                        },
+                    },
+                    projects: true,
+                    certifications: true,
+                    research: true,
+                    skills: {
+                        include: {
+                            skill: true,
+                        },
+                    },
+                    links: true,
+                },
+                orderBy: {
+                    createdAt: "desc",
+                },
+            },
+        },
+    });
+
+    if (!user) {
+        throw new ApiError(404, "User not found");
+    }
+
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            JSON.parse(
+                JSON.stringify(user, (_key, value) =>
+                    typeof value === "bigint" ? value.toString() : value
+                )
+            ),
+            "User data fetched successfully"
+        )
+    );
+});
+
 export{
 registerUser, 
 validateOTPRegistration,
 loginUser,
 logoutUser,
 updateProfile,
-updateUserbyResumeData 
+updateUserbyResumeData,
+getUserData
 }

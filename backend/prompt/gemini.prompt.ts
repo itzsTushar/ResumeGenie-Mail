@@ -424,8 +424,7 @@ Your objective is to produce a complete, accurate, and relationally organized re
 Remember: previous employers belong inside experiences as strings. Recipient companies belong to the application's separate Company table and must not be extracted as a separate collection from the resume.
 `;
 
-export const JOB_EMAIL_PROMPT = `
-You will receive a structured JSON object containing the user's
+export const JOB_EMAIL_PROMPT = `You will receive a structured JSON object containing the user's
 professional profile and the company's opportunity details.
 
 Treat the supplied JSON as the authoritative source for the user's
