@@ -424,7 +424,7 @@ const updateUserbyResumeData = asyncHandler(async (req: Request, res: Response) 
 		throw new ApiError(400, "Invalid resume structure");
 	}
 
-	const savedResume = await prisma.$transaction(async (tx) => {
+	const savedResume = await prisma.$transaction(async (tx : any) => {
 		const resume = await tx.resume.create({
 			data: {
 				userId: userId,
