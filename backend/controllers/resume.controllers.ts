@@ -23,13 +23,13 @@ const fetchResumeData = asyncHandler(async (req: Request, res: Response) => {
 
 	// decode the token by using await decodeToken()
 	const decodedToken = await decodeToken(accessToken);
-
-	//finde userId = decodedToken._id ,if userid not throw new ApiError
-	const userId = decodedToken?._id;
-
-	if (!userId) {
+	if (!decodedToken._id) {
 		throw new ApiError(401, "Invalid access token");
 	}
+	//finde userId = decodedToken._id ,if userid not throw new ApiError
+	const userId = decodedToken._id;
+
+
 
 	//find the link
 	const user = await prisma.user.findUnique({

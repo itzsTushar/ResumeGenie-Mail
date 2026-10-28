@@ -43,11 +43,14 @@ const sendJobMailtoCompany = asyncHandler(async (req: Request, res: Response) =>
 		throw new ApiError(401, "Access token is missing");
 	}
 
-	const decodedToken = await decodeToken(accessToken) as jwt.JwtPayload;
+	const decodedToken = await decodeToken(accessToken);
 	console.log(decodedToken._id)
 
 	if (!decodedToken?._id) {
 		throw new ApiError(401, "Invalid access token");
+	}
+	if(!decodedToken._id){
+		throw new ApiError(404, "User not found");
 	}
 
 	const user = await prisma.user.findUnique({
@@ -55,10 +58,6 @@ const sendJobMailtoCompany = asyncHandler(async (req: Request, res: Response) =>
 			userId: decodedToken._id
 		}
 	});
-
-	if (!user) {
-		throw new ApiError(404, "User not found");
-	}
 
 	// call the contnet = geminiJobEmail func (company name ,hrname,hrmail desc,user_id);
 	const content = await geminiJobEmail(companyname,hrname,hrmail,desc,user.userId);

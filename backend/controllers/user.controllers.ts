@@ -45,7 +45,7 @@ const registerUser = asyncHandler(async (req : Request , res : Response) => {
 	const hashedPassword = await generateHashPassword(password)
 	console.log("password :",password);
 	console.log("hashed password :",hashedPassword);
-	const refreshToken = await generateRefreshToken(username,email);
+	const refreshToken = await generateRefreshToken(0,username,email);
 	 
 	const user = await prisma.user.create({
             data: {
@@ -107,7 +107,7 @@ const validateOTPRegistration = asyncHandler(async (req: Request, res: Response)
 
         // 3. Verify the registration token
         // decodeToken must verify using REFRESH_TOKEN_SECRET
-        const decoded = await decodeToken(registerToken,process.env.REFRESH_TOKEN_SECRET!) as jwt.JwtPayload;
+        const decoded = await decodeToken(registerToken,process.env.REFRESH_TOKEN_SECRET!);
 		console.log(!decoded._id || !decoded.username);
         if (!decoded._id || !decoded.username) {
             throw new ApiError(401, "Invalid registration token");
@@ -116,7 +116,7 @@ const validateOTPRegistration = asyncHandler(async (req: Request, res: Response)
         // 4. Find user using the token payload
         const user = await prisma.user.findUnique({
             where: {
-                username: decoded._id
+                username: decoded.username
             }
         });
 		//console.log(user)
@@ -126,8 +126,8 @@ const validateOTPRegistration = asyncHandler(async (req: Request, res: Response)
 
         // 5. Confirm the token belongs to this user
         if (
-        	user.username !== decoded._id || 
-            user.email !== decoded.username
+        	user.username !== decoded.username || 
+            user.email !== decoded.email
         ) {
             throw new ApiError(401, "Invalid registration token");
         }
