@@ -45,7 +45,7 @@ const registerUser = asyncHandler(async (req : Request , res : Response) => {
 	const hashedPassword = await generateHashPassword(password)
 	console.log("password :",password);
 	console.log("hashed password :",hashedPassword);
-	const refreshToken = await generateRefreshToken(0,username,email);
+	const refreshToken = await generateRefreshToken("0",username,email);
 	 
 	const user = await prisma.user.create({
             data: {
