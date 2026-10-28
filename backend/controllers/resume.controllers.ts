@@ -21,15 +21,15 @@ const fetchResumeData = asyncHandler(async (req: Request, res: Response) => {
 		throw new ApiError(401, "Access token is required");
 	}
 
-	// decode the token by using await decodeToken()
-	const decodedToken = await decodeToken(accessToken);
-	if (!decodedToken._id) {
+	// decode the token and typecast it so TypeScript knows _id exists
+	const decodedToken = (await decodeToken(accessToken)) as { _id?: any };
+
+	if (!decodedToken?._id) {
 		throw new ApiError(401, "Invalid access token");
 	}
-	//finde userId = decodedToken._id ,if userid not throw new ApiError
+	
+	// find userId = decodedToken._id
 	const userId = decodedToken._id;
-
-
 
 	//find the link
 	const user = await prisma.user.findUnique({
@@ -47,8 +47,6 @@ const fetchResumeData = asyncHandler(async (req: Request, res: Response) => {
 
 	//try to callgemini function with a callGemini(RESUME_FETCH_PROMPT,resumelink);
 	// store the data in global varibale return from callGemini
-	//console.log(user.resume);
-	//console.log(RESUME_FETCH_PROMPT);
 	resumeData = await callGemini(RESUME_FETCH_PROMPT, user.resume);
 	
 	//return the res.status that resume fetched
@@ -60,5 +58,5 @@ const fetchResumeData = asyncHandler(async (req: Request, res: Response) => {
 });
 
 export {
-	fetchResumeData,resumeData
+	fetchResumeData, resumeData
 }

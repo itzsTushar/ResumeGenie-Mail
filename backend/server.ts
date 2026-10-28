@@ -1,4 +1,4 @@
-import app from "./app.ts";
+import app from "./app";
 import "dotenv/config";
 const PORT = Number(process.env.PORT) || 7000;
 

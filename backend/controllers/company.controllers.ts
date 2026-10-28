@@ -13,62 +13,44 @@ import {geminiJobEmail} from "../handler/gemini.handler";
 const sendJobMailtoCompany = asyncHandler(async (req: Request, res: Response) => {
 	// get the req.body
 	const {companyname, hrname, hrmail, desc } = req.body;
-	//console.log(req.body);
 
-	// if req.body not contain name,companyname, hrname,hemail and desc throw api error
-	//console.log(companyname)
-	//console.log(hrname)
-	//console.log(hrmail)
-	//console.log(desc)
 	if ([companyname, hrname, hrmail, desc].some((field) => !field?.trim())) {
 		throw new ApiError(400, "All fields are required");
 	}
 
-	// save this in db
-	// Assuming a JobMail model in your Prisma schema
-	// const jobMail = await prisma.jobMail.create({
-	// 	data: {
-	// 		name,
-	// 		companyname,
-	// 		hrname,
-	// 		hrmail,
-	// 		desc
-	// 	}
-	// });
-
-	// get the acces token decode the token and is any fil thorw api error , else find user_id;
+	// get the access token decode the token
 	const accessToken = req.cookies?.accessToken;
 
 	if (!accessToken) {
 		throw new ApiError(401, "Access token is missing");
 	}
 
-	const decodedToken = await decodeToken(accessToken);
-	console.log(decodedToken._id)
+	// Typecast decodedToken so TypeScript knows _id exists
+	const decodedToken = (await decodeToken(accessToken)) as { _id?: string | bigint };
 
 	if (!decodedToken?._id) {
 		throw new ApiError(401, "Invalid access token");
 	}
-	if(!decodedToken._id){
-		throw new ApiError(404, "User not found");
-	}
 
 	const user = await prisma.user.findUnique({
 		where: {
-			userId: decodedToken._id
+			userId: decodedToken._id as any // Matches your Prisma primary key type
 		}
 	});
 
-	// call the contnet = geminiJobEmail func (company name ,hrname,hrmail desc,user_id);
-	const content = await geminiJobEmail(companyname,hrname,hrmail,desc,user.userId);
+	if (!user) {
+		throw new ApiError(404, "User not found");
+	}
 
-	// call teh sendJobEmail func - > sendJobEmail(fromGmail=hrmail,toGmail=user.email,content);
-	//await sendJobEmail(hrmail, user.email, content);
+	// Convert user.userId to string if it is a bigint
+	const content = await geminiJobEmail(
+		companyname,
+		hrname,
+		hrmail,
+		desc,
+		String(user.userId)
+	);
 
-	//console.log(email Send)
-	//console.log(`Job email sent successfully to ${user.email}`);
-
-	// res ApiResponse(mail sent);
 	return res
 		.status(200)
 		.json(new ApiResponse(200, {content}, "Job email generated successfully"));

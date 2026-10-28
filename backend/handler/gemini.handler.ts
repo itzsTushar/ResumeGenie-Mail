@@ -1,11 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
 import "dotenv/config";
-import { getPrivatePdfUrl } from "./file.handler";
-import JOB_EMAIL_PROMPT from "../prompt/gemini.prompt";
+import {JOB_EMAIL_PROMPT} from "../prompt/gemini.prompt";
 const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY!,
 });
-
+import { ApiError } from "../utilis/apierror"; // adjust path as needed
+import prisma from "../database/database";
 const callGemini = async (
     prompt: string,
     publicIdOrUrl: string // Updated variable name for clarity
