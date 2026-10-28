@@ -4,7 +4,7 @@
   "description": "backend of the ResumeGenie-Mail service devloped for the help of those students and job seekers whose are frusted after apply multiple jobs manually...",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only server.ts",
-    "build": "build": "prisma generate && tsc",
+    "build":"prisma generate && tsc",
     "start": "node dist/server.js",
     "test": "echo \\\"Error: no test specified\\\" && exit 1"
   },
